@@ -1,6 +1,6 @@
 import { useCart } from "../context/CartContext";
 
-export default function FoodCard({ name, price, image }) {
+export default function Foodcard({ name, price, image }) {
   const { addToCart } = useCart();
 
   return (

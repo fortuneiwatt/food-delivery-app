@@ -5,7 +5,6 @@ import CheckoutPage from "./pages/Checkout";
 import FloatingCart from "./components/FloatingCart";
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext"; // ✅ import
-
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 

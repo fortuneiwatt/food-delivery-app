@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import emailjs from "emailjs-com";
 
 export default function DeliveryConfirmation() {
   const { orderId } = useParams();
@@ -23,14 +24,38 @@ export default function DeliveryConfirmation() {
     );
   }
 
-  function simulateEmailSend() {
-    // mark as completed, "send" email (simulated)
-    const updated = { ...order, status: "Completed", emailedTo: email, completedAt: new Date().toISOString() };
-    const all = JSON.parse(localStorage.getItem("orders") || "{}");
-    all[orderId] = updated;
-    localStorage.setItem("orders", JSON.stringify(all));
-    setSent(true);
-    setTimeout(() => navigate("/"), 1500);
+  function sendEmailReceipt() {
+    const templateParams = {
+      to_email: email,
+      to_name: user?.email || "Customer",
+      order_id: order.id,
+      order_total: order.total,
+      items: order.items.map(it => `${it.name} x${it.quantity || 1}`).join(", "),
+    };
+
+    emailjs
+      .send(
+        "service_17vzitb",     // from EmailJS dashboard
+        "template_rynitnh",    // from EmailJS dashboard
+        templateParams,
+        "Y_yWeoaJ7VS_7TRog"      // from EmailJS dashboard
+      )
+      .then(
+        () => {
+          setSent(true);
+          // mark order completed
+          const updated = { ...order, status: "Completed", emailedTo: email };
+          const all = JSON.parse(localStorage.getItem("orders") || "{}");
+          all[orderId] = updated;
+          localStorage.setItem("orders", JSON.stringify(all));
+
+          setTimeout(() => navigate("/"), 2000);
+        },
+        (err) => {
+          console.error("EmailJS error:", err);
+          alert("Failed to send email. Check console for details.");
+        }
+      );
   }
 
   return (
@@ -41,7 +66,7 @@ export default function DeliveryConfirmation() {
           Order <span className="font-mono">{orderId}</span> has been delivered.
         </p>
 
-        <label className="block mt-6 text-sm mb-1">Email for receipt/confirmation</label>
+        <label className="block mt-6 text-sm mb-1">Email for receipt</label>
         <input
           type="email"
           className="w-full border rounded-lg px-3 py-2"
@@ -51,16 +76,14 @@ export default function DeliveryConfirmation() {
         />
 
         <button
-          onClick={simulateEmailSend}
-          disabled={!email}
-          className={`w-full mt-4 py-3 rounded-xl text-white ${email ? "bg-green-600" : "bg-gray-400 cursor-not-allowed"}`}
+          onClick={sendEmailReceipt}
+          disabled={!email || sent}
+          className={`w-full mt-4 py-3 rounded-xl text-white ${
+            email && !sent ? "bg-green-600" : "bg-gray-400 cursor-not-allowed"
+          }`}
         >
-          {sent ? "Sending..." : "Confirm & Send Email"}
+          {sent ? "Email Sent ✅" : "Confirm & Send Receipt"}
         </button>
-
-        <div className="mt-4 text-sm text-gray-500">
-          (This demo simulates email sending. For real emails later, you can hook up EmailJS or a backend endpoint.)
-        </div>
       </div>
     </div>
   );

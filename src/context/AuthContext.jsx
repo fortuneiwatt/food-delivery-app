@@ -1,31 +1,41 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const raw = localStorage.getItem("auth_user");
+    return raw ? JSON.parse(raw) : null;
+  });
 
-  const login = (email) => {
-    // For now, just mock a user object
+  useEffect(() => {
+    localStorage.setItem("auth_user", JSON.stringify(user));
+  }, [user]);
+
+  const login = (email, password) => {
+    if (!email || !password) return false;      // ✅ allow any non-empty creds
     setUser({ email });
+    return true;
   };
 
-  const logout = () => {
-    setUser(null);
+  const register = (email, password) => {
+    if (!email || !password) return false;
+    setUser({ email });
+    return true;
   };
+
+  const logout = () => setUser(null);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used inside an AuthProvider");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside an AuthProvider");
+  return ctx;
 }

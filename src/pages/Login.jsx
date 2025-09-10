@@ -12,11 +12,13 @@ export default function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const success = login(email, password);
-    if (success) {
+
+    // ✅ allow any non-empty email & password
+    if (email.trim() && password.trim()) {
+      login(email.trim(), password);
       navigate("/");
     } else {
-      setError("Invalid credentials");
+      setError("Please enter both email and password.");
     }
   };
 

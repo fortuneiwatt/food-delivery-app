@@ -25,24 +25,48 @@ export default function DeliveryConfirmation() {
   }
 
   function sendEmailReceipt() {
+    if (!email) {
+      alert("Please enter a valid email.");
+      return;
+    }
+
     const templateParams = {
-      to_email: email,
+      email: email, // ✅ must match {{email}} in your EmailJS template
       to_name: user?.email || "Customer",
       order_id: order.id,
       order_total: order.total,
-      items: order.items.map(it => `${it.name} x${it.quantity || 1}`).join(", "),
+      items: `
+        <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Item</th>
+              <th style="text-align:center; padding:8px; border-bottom:1px solid #ddd;">Qty</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.items
+              .map(
+                (it) => `
+                <tr>
+                  <td style="padding:8px; border-bottom:1px solid #eee;">${it.name}</td>
+                  <td style="text-align:center; padding:8px; border-bottom:1px solid #eee;">${it.quantity || 1}</td>
+                  <td style="text-align:right; padding:8px; border-bottom:1px solid #eee;">₦${(it.price || 0) * (it.quantity || 1)}</td>
+                </tr>
+              `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      `,
     };
 
     emailjs
-      .send(
-        "service_17vzitb",     // from EmailJS dashboard
-        "template_rynitnh",    // from EmailJS dashboard
-        templateParams,
-        "Y_yWeoaJ7VS_7TRog"      // from EmailJS dashboard
-      )
+      .send("service_17vzitb", "template_rynitnh", templateParams, "Y_yWeoaJ7VS_7TRog")
       .then(
         () => {
           setSent(true);
+
           // mark order completed
           const updated = { ...order, status: "Completed", emailedTo: email };
           const all = JSON.parse(localStorage.getItem("orders") || "{}");
